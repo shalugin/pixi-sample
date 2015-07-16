@@ -1,0 +1,102 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>pixi.js example 1</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000000;
+        }
+    </style>
+    <script src="pixi.js"></script>
+</head>
+<body>
+<script>
+
+    var renderer = PIXI.autoDetectRenderer(800, 600, {transparent: true, antialias: true});
+    document.body.appendChild(renderer.view);
+
+    // create the root of the scene graph
+    var stage = new PIXI.Container();
+
+    function addCircle(x, y, r, color) {
+        var graphics = new PIXI.Graphics();
+        var clr = Math.floor(Math.random() * 255 * 255 * 255);
+        graphics.lineStyle(1, clr, 1);
+        graphics.position.x = x;
+        graphics.position.y = y;
+        graphics.drawCircle(0, 0, r);
+
+        var startTime = new Date().getTime();
+        var endTime = startTime + 1000 * 2;
+        return {
+            startTime: startTime,
+            endTime: endTime,
+            liveTime: endTime - startTime,
+            scaleCoefficient: 4 + Math.floor(Math.random() * 10),
+            gfx: graphics
+        };
+    }
+
+    var graphics = new PIXI.Graphics();
+    graphics.beginFill(0xFF00FF, 1);
+    graphics.drawCircle(500, 500, 30);
+    graphics.endFill();
+    stage.addChild(graphics);
+
+    var objects = [];
+
+    function generateRandomCircle() {
+        var x = Math.random() * 300 + 200;
+        var y = Math.random() * 300 + 200;
+
+        var obj = addCircle(x, y, 10, 0xF7EDB0);
+        stage.addChild(obj.gfx);
+        objects.push(obj);
+    }
+
+
+    // used for spinning!
+    var count = 0;
+
+
+    // start animating
+    animate();
+
+    function animate() {
+        var time = new Date().getTime();
+
+        for (var i = objects.length; i > 0; i--) {
+            var obj = objects[i - 1];
+            if (obj.endTime > time) {
+                var x = obj.endTime - time;
+                var c = (x / obj.liveTime);
+
+                obj.gfx.scale.x = 1 + (1 - c) * obj.scaleCoefficient;
+                obj.gfx.scale.y = 1 + (1 - c) * obj.scaleCoefficient;
+                obj.gfx.alpha = c;
+            } else {
+                objects.splice(i - 1, 1);
+                stage.removeChild(obj);
+                obj.gfx.clear();
+//                obj.gfx.destroy();
+            }
+        }
+
+        requestAnimationFrame(animate);
+
+        // render the root container
+        renderer.render(stage);
+    }
+
+    setInterval(function () {
+        generateRandomCircle();
+//        console.log(objects.length);
+    }, 500);
+
+</script>
+
+</body>
+</html>
