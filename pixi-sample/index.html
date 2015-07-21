@@ -9,10 +9,69 @@
             padding: 0;
             background-color: #000000;
         }
+
+        table th {
+            font-size: 13px;
+            text-transform: uppercase;
+            color: white;
+        }
+
+        tr {
+            line-height: 18px;
+        }
+
+        table td {
+            font-size: 10px;
+            font-weight: normal;
+            text-transform: uppercase;
+            color: white;
+        }
+
+        .data-box {
+            z-index: 15;
+            background-color: rgba(255, 51, 51, 0.5);
+            font-family: Oswald, 'Open Sans', sans-serif;
+            font-weight: bold;
+            border-radius: 3px;
+            display: block;
+            border-spacing: 2px;
+            max-width: 98%;
+            height: 20px;
+            margin-top: -10px;
+        }
+
+        .bar {
+            background-color: #0c2b4a;
+            position: absolute;
+            width: 100px;
+            height: 20px;
+            border-radius: 3px;
+            z-index: -1;
+            margin-top: -10px;
+            overflow: hidden;
+        }
     </style>
     <script src="pixi.js"></script>
+    <script src="proton-1.0.0.min.js"></script>
+    <script src="engine.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js" charset="utf-8"></script>
+    <link rel="stylesheet" type="text/css" href="flags.css">
 </head>
 <body>
+<div class="data-box" style="position: absolute; top: 10px; left: 6px;">
+    <table id="attakers">
+        <thead>
+        <tr style="text-align: center;">
+            <th colspan="4" style="padding: 0">АТАКУЮЩИЕ</th>
+        </tr>
+        <tr>
+            <th colspan="4" style="text-align: right">Страна</th>
+        </tr>
+        </thead>
+    </table>
+</div>
+
+<canvas id="canvas" width="800" height="600"></canvas>
 <script>
 
     var renderer = PIXI.autoDetectRenderer(800, 600, {transparent: true, antialias: true});
@@ -57,10 +116,12 @@
         objects.push(obj);
     }
 
+    //    var engine = new Engine();
+    //    engine.emit
+
 
     // used for spinning!
     var count = 0;
-
 
     // start animating
     animate();
@@ -81,7 +142,6 @@
                 objects.splice(i - 1, 1);
                 stage.removeChild(obj);
                 obj.gfx.clear();
-//                obj.gfx.destroy();
             }
         }
 
@@ -89,14 +149,90 @@
 
         // render the root container
         renderer.render(stage);
+//        engine.updateProton();
+    }
+
+    var attacker = {
+        arr: [],
+        arr2: []
+    };
+
+    var attacked = {
+        arr: [],
+        arr2: []
+    };
+
+    function addToArray(data, key) {
+        function sort() {
+            data.arr2.sort(function (a, b) {
+                return b.count - a.count;
+            });
+        }
+
+        if (data.arr[key]) {
+            data.arr[key].count++;
+            sort();
+        } else {
+            data.arr[key] = {
+                key: key,
+                iso: 'de',
+                count: 1
+            };
+            data.arr2.push(data.arr[key]);
+            sort();
+        }
+    }
+
+    function attack(src, dst) {
+        addToArray(attacked, src);
+        addToArray(attacker, dst);
+    }
+
+    var pallete = ['a', 'b', 'c', 'd', 'e'];
+
+    function generateAttack() {
+        var rnd1 = Math.floor(Math.random() * pallete.length);
+        var rnd2 = Math.floor(Math.random() * pallete.length);
+
+        var p1 = pallete[rnd1];
+        var p2 = pallete[rnd2];
+
+        attack(p1, p2);
     }
 
     setInterval(function () {
-        generateRandomCircle();
-//        console.log(objects.length);
-    }, 500);
+        generateAttack();
+    }, 100);
+
+
+    var top5Attaker = [];
+
+    setInterval(function () {
+        for (var i = 0; i < attacker.arr2.length && i < 5; i++) {
+            var item = attacker.arr2[i];
+            if (top5Attaker[i] === item) {
+                // update count only and progress
+                top5Attaker[i].updateTime = new Date().getTime();
+            } else {
+                top5Attaker[i] = item;
+                top5Attaker[i].updateTime = new Date().getTime();
+            }
+        }
+
+        d3.select("#attakers").select('tbody').remove();
+        var tr = d3.select("#attakers").append('tbody').selectAll('tbody').data(top5Attaker)
+                .enter().append("tr");
+        var td = tr.selectAll('td').data(function (d) {
+            var div = '<div class="bar"></div>';
+            var flag = '<span class="f16"><i class="flag ' + d.iso.toLowerCase() + '"></i></span>';
+            return [div, d.count, flag, d.key];
+        }).enter().append("td");
+        td.html(function (d) {
+            return d;
+        });
+
+    }, 1000);
 
 </script>
-
 </body>
 </html>
